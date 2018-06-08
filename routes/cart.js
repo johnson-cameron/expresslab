@@ -1,52 +1,38 @@
 "use strict";
 const express = require("express");
 const cartRouter = express.Router();
+const pg = require("pg");
+const pool = require("../connection");
 
-const cart = [
-  {
-    product: "Tshirt",
-    price: "15.00",
-    quantity: "3",
-    id: 0
-  },
-  {
-    product: "Shoes",
-    price: "80.00",
-    quantity: "1",
-    id: 1
-  },
-  {
-    product: "Pants",
-    price: "35.00",
-    quantity: "1",
-    id: 2
-  }
-];
+cartRouter.get("/shopping-cart", (req, res) => {
+  pool.query("SELECT * FROM cart ORDER BY id").then((result) => {
+    res.send(result.rows);
 
-let idCount = 3;
-
-cartRouter.get("/cart", (req, res) => {
-  console.log(cart);
-  res.send(cart);
+  });
 });
 
-cartRouter.post("/cart", (req, res) => {
-  console.log(cart);
-  res.send(cart);
+cartRouter.post("/shopping-cart", (req, res) => {
+  pool.query("INSERT INTO cart(product, price, quantity) VALUES($1::text, $2::text, $3::text)", [req.body.product, req.body.price, req.body.quantity]).then(() => {
+    pool.query("SELECT * FROM cart ORDER BY id").then((result) => {
+      res.send(result.rows);
+    });
+  });
 });
 
-cartRouter.delete("/cart/:id", (req, res) => {
-  console.log(req.params.id);
-  console.log(cart);
-  res.send(cart);
+cartRouter.delete("/shopping-cart/:id", (req, res) => {
+  pool.query("DELETE FROM cart WHERE id=$1::int", [req.params.id]).then(() => {
+    pool.query("SELECT * FROM cart ORDER BY id").then((result) => {
+      res.send(result.rows);
+    });
+  });
 });
 
-
-cartRouter.put("/cart/:id", (req, res) => {
-  console.log(req.params.id);
-  console.log(cart);
-  res.send(cart);
+cartRouter.put("/shopping-cart/:id", (req, res) => {
+  pool.query("UPDATE cart SET product=$1::text, price=$2::text, quantity=$3::text WHERE id=$4::int", [req.body.product, req.body.price, req.body.quantity, req.params.id]).then(() => {
+    pool.query("SELECT * FROM cart ORDER BY id").then((result) => {
+      res.send(result.rows);
+    });
+  });
 });
-
 
 module.exports = cartRouter;
